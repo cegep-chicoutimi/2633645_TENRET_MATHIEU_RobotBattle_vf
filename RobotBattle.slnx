@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="RobotBattle/RobotBattle.csproj" />
+  <Project Path="RobotBattleTests/RobotBattleTests.csproj" Id="9bfab49c-616e-47f0-bbbf-d0b0e468d27f" />
+  <Project Path="RobotBattleTests2/RobotBattleTests2.csproj" Id="9c7c7978-ee94-4df0-98c6-b9aee3cea935" />
+</Solution>
