@@ -5,6 +5,7 @@ using RobotBattle.Network;
 using RobotBattle.Views;
 using Serilog;
 using Serilog.Core;
+using System.ComponentModel.Design;
 using System.Net.Sockets;
 
 namespace RobotBattle.Controllers
@@ -251,8 +252,19 @@ namespace RobotBattle.Controllers
                 {
                     Message endMessage = BuildEndMessage();
                     connection.SendMessage(endMessage);
-                    view.ShowWinner(game.GetWinner());
-                    Logger.Information($"Partie terminée, avec comme gagnant : {(game.GetWinner().IsHost ? "HOTE" : "CLIENT")}");
+
+                    if (game.HasEscaped)
+                    {
+                        view.ShowMessage("\n--- FIN DE PARTIE ---");
+                        view.ShowMessage("Aucun gagnant, car un robot a réussi à fuir !");
+                        Logger.Information("Partie terminée par une fuite");
+                    }
+                    else
+                    {
+                        view.ShowWinner(game.GetWinner());
+                        Logger.Information($"Partie terminée, avec comme gagnant : {(game.GetWinner().IsHost ? "HOTE" : "CLIENT")}");
+                    }
+
                     return;
                 }
 
@@ -418,6 +430,7 @@ namespace RobotBattle.Controllers
             Robot actor = game.CurrentRobot;
             Robot target = game.OpponentRobot;
             int damage = 0;
+            bool actionCompleted = true;
 
             switch (action)
             {
@@ -426,6 +439,11 @@ namespace RobotBattle.Controllers
                     break;
 
                 case GameAction.ATTACK_PUISSANCE:
+                    if (actor.GetStatValue(StatsType.ENERGY) < 2)
+                    {
+                        throw new InvalidOperationException("INVALID_ACTION");
+                    }
+
                     damage = target.ReceiveDamage(actor.AttackWithPower());
                     break;
 
@@ -437,12 +455,34 @@ namespace RobotBattle.Controllers
                     actor.Recharge();
                     break;
 
+                case GameAction.REPAIR:
+                    if (actor.GetStatValue(StatsType.ENERGY) < 1)
+                    {
+                        throw new InvalidOperationException("INVALID_ACTION");
+                    }
+
+                    actor.Repair();
+                    break;
+
+                case GameAction.DODGE:
+                    actionCompleted = actor.Dodge();
+                    break;
+
+                case GameAction.ESCAPE:
+                    actionCompleted = actor.Escape();
+
+                    if(actionCompleted)
+                    {
+                        game.EscapeGame();
+                    }
+                    break;
+
                 default:
                     throw new InvalidOperationException("Action invalide !");
             }
 
             string actorName = actor.IsHost ? "HOTE" : "CLIENT";
-            string data = string.Join(';', actorName, action, damage,
+            string data = string.Join(';', actorName, action, actionCompleted, damage,
                 game.Robots[0].GetStatValue(StatsType.HP),
                 game.Robots[1].GetStatValue(StatsType.HP),
                 game.Robots[0].GetStatValue(StatsType.ENERGY),
@@ -467,6 +507,11 @@ namespace RobotBattle.Controllers
             {
                 GameAction action = view.AskPlayerAction();
                 if (action == GameAction.ATTACK_PUISSANCE && robot.GetStatValue(StatsType.ENERGY) < 2)
+                {
+                    view.ShowMessage("Énergie insuffisante => Choisissez une autre action !");
+                    continue;
+                }
+                if (action == GameAction.REPAIR && robot.GetStatValue(StatsType.ENERGY) < 1)
                 {
                     view.ShowMessage("Énergie insuffisante => Choisissez une autre action !");
                     continue;
@@ -497,9 +542,9 @@ namespace RobotBattle.Controllers
         private Message BuildEndMessage()
         {
             if (game == null) throw new InvalidOperationException();
-            Robot winner = game.GetWinner();
+            string winner = game.HasEscaped ? "AUCUN" : game.GetWinner().IsHost ? "HOTE" : "CLIENT";
 
-            string data = string.Join(';', winner.IsHost ? "HOTE" : "CLIENT",
+            string data = string.Join(';', winner,
                 game.Robots[0].GetStatValue(StatsType.HP),
                 game.Robots[1].GetStatValue(StatsType.HP),
                 game.Robots[0].GetStatValue(StatsType.ENERGY),
@@ -529,25 +574,39 @@ namespace RobotBattle.Controllers
         private void ShowResult(Message message)
         {
             string[] values = message.Data.Split(';');
-            if (values.Length != 7)
+            if (values.Length != 8)
             {
                 view.ShowMessage("Résultat reçu invalide !");
                 Logger.Information("Résultat invalide reçu : " + message.Data);
                 return;
             }
 
-            view.ShowMessage($"\n{values[0]} => {values[1]} | dégâts infligés : {values[2]}");
-            view.ShowMessage($"HP : Hôte={values[3]}, Client={values[4]} | Énergie : Hôte={values[5]}, Client={values[6]}");
+            view.ShowMessage($"\n{values[0]} => {values[1]} | Réussite : {values[2]}| Dégâts infligés : {values[3]}");
+            view.ShowMessage($"HP : Hôte={values[4]}, Client={values[5]} | Énergie : Hôte={values[6]}, Client={values[7]}");
         }
 
         private void ShowEnd(Message message)
         {
             string[] values = message.Data.Split(';');
-            if (values.Length == 3)
+            if (values.Length == 5)
             {
-                view.ShowMessage($"\n--- FIN DE PARTIE ---" +
+                if (values[0] == "AUCUN")
+                {
+                    view.ShowMessage($"\n--- FIN DE PARTIE ---" +
+                    $"\nAucun gagnant, car un robot a réussi à fuir !" +
+                    $"\nHP finaux : Hôte={values[1]}, Client={values[2]}");
+                }
+                else
+                {
+                    view.ShowMessage($"\n--- FIN DE PARTIE ---" +
                     $"\nGagnant : {values[0]}" +
                     $"\nHP finaux : Hôte={values[1]}, Client={values[2]}");
+                }
+            }
+            else
+            {
+                view.ShowMessage("Message de fin de partie invalide !");
+                return;
             }
         }
     }

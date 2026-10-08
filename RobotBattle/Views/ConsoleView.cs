@@ -88,6 +88,9 @@ namespace RobotBattle.Views
                 Console.WriteLine("2. Défense");
                 Console.WriteLine("3. Attaque puissante (coût : 2 énergie)");
                 Console.WriteLine("4. Recharge (+1 énergie)");
+                Console.WriteLine("5. Réparation (coût : 1 énergie)");
+                Console.WriteLine("6. Esquive");
+                Console.WriteLine("7. Fuite");
                 Console.Write("Action : ");
 
                 string? choice = Console.ReadLine();
@@ -97,6 +100,9 @@ namespace RobotBattle.Views
                     case "2": return GameAction.DEFENSE;
                     case "3": return GameAction.ATTACK_PUISSANCE;
                     case "4": return GameAction.RECHARGE;
+                    case "5": return GameAction.REPAIR;
+                    case "6": return GameAction.DODGE;
+                    case "7": return GameAction.ESCAPE;
                     default: Console.WriteLine("Action invalide !"); break;
                 }
             }

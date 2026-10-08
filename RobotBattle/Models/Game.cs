@@ -26,6 +26,15 @@
             set { currentPlayer = value; }
         }
 
+        private bool hasEscaped;
+
+        public bool HasEscaped
+        {
+            get { return hasEscaped; }
+            private set { hasEscaped = value; }
+        }
+
+
         private List<Robot> robots;
 
         public IReadOnlyList<Robot> Robots
@@ -47,6 +56,7 @@
             robots = new List<Robot> { hostRobot, playerRobot };
             Status = GameStatus.WAITING_FOR_PLAYER_CONFIG;
             CurrentPlayer = 0;
+            HasEscaped = false;
         }
 
         public void StartGame()
@@ -57,6 +67,12 @@
 
         public bool CheckGameEnded()
         {
+            if (HasEscaped)
+            {
+                Status = GameStatus.END_GAME;
+                return true;
+            }
+
             bool ended = robots.Any(r => r.GetStatValue(StatsType.HP) <= 0);
             if (ended)
             {
@@ -67,6 +83,11 @@
 
         public Robot GetWinner()
         {
+            if (HasEscaped)
+            {
+                throw new InvalidOperationException("La partie s'est terminée sans gagant !");
+            }
+
             if (!CheckGameEnded())
             {
                 throw new InvalidOperationException("La partie n'est pas terminée !");
@@ -81,6 +102,12 @@
         public void NextTurn()
         {
             CurrentPlayer = CurrentPlayer == 0 ? 1 : 0;
+        }
+
+        public void EscapeGame()
+        {
+            HasEscaped = true;
+            Status = GameStatus.END_GAME;
         }
     }
 }

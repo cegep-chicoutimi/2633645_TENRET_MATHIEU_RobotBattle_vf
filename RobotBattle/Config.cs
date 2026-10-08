@@ -19,6 +19,13 @@
         public int RepairMinHp { get; set; }
         public int LuckToEscape { get; set; }
 
+        public int DefenseBonusPercent { get; set; } = 40;
+        public int DefenseMinBonus { get; set; } = 5;
+        public int LuckToEscapePercent { get; set; } = 15;
+        public int MinSuccessPercent { get; set; } = 50;
+        public int MaxSuccessPercent { get; set; } = 85;
+        public int MaxFailStreak { get; set; } = 2;
+
         public Config(
             int port = 5000,
             string ipAddress = "0.0.0.0",
