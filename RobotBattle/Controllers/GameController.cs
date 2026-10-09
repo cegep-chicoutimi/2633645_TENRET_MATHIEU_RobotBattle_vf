@@ -6,6 +6,7 @@ using RobotBattle.Views;
 using Serilog;
 using Serilog.Core;
 using System.ComponentModel.Design;
+using System.Net;
 using System.Net.Sockets;
 
 namespace RobotBattle.Controllers
@@ -57,6 +58,15 @@ namespace RobotBattle.Controllers
 
             try
             {
+                if (isHost)
+                {
+                    string ipAddress = Dns.GetHostAddresses(Dns.GetHostName()).First(ip => ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip)).ToString();
+                    Console.WriteLine($"\n-----------------------------------");
+                    Console.WriteLine($"IP de l'hôte : {ipAddress}");
+                    Console.WriteLine($"Port de l'hôte : {config.Port}");
+                    Console.WriteLine($"-----------------------------------");
+                }
+
                 socketServer.StartServer(port);
                 view.ShowMessage($"\nServeur démarré sur le port {port}");
 

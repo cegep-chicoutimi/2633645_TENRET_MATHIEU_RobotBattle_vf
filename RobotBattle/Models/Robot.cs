@@ -39,7 +39,7 @@
             set { isDodging = value; }
         }
 
-        private readonly Randomize randomize = new Randomize();
+        private readonly Randomize randomize;
 
         private List<Stats> stats;
 
@@ -60,6 +60,7 @@
             IsHost = isHost;
             this.stats = stats;
             this.config = config;
+            randomize = new Randomize(config);
         }
 
         private Stats GetStat(StatsType type)
@@ -71,7 +72,11 @@
         {
             IsRecharging = false;
 
-            if (!randomize.RandomAttack())
+            if (!randomize.HasCompleteRandom(
+                GetBaseStatValue(StatsType.HP),
+                GetStatValue(StatsType.HP),
+                config.MinSuccessPercent,
+                config.MaxSuccessPercent))
             {
                 return 0;
             }
@@ -83,32 +88,40 @@
         {
             Stats energy = GetStat(StatsType.ENERGY);
 
-            if (energy.CurrentValue < PowerfulAttackEnergyCost)
+            if (energy.CurrentValue < config.PowerDamageEnergyCost)
             {
                 throw new InvalidOperationException("Énergie insuffisante pour une attaque puissante !");
             }
 
-            energy.CurrentValue -= PowerfulAttackEnergyCost;
+            energy.CurrentValue -= config.PowerDamageEnergyCost;
             IsRecharging = false;
 
-            if (!randomize.RandomPowerfulAttack())
+            if (!randomize.HasCompleteRandom(
+                GetBaseStatValue(StatsType.HP),
+                GetStatValue(StatsType.HP),
+                config.MinSuccessPercent,
+                config.MaxSuccessPercent))
             {
                 return 0;
             }
 
-            return GetStat(StatsType.DAMAGE).CurrentValue * 2;
+            return GetStat(StatsType.DAMAGE).CurrentValue * config.PowerDamageMultiplier;
         }
 
         public void Recharge()
         {
             Stats energy = GetStat(StatsType.ENERGY);
-            energy.CurrentValue = Math.Min(config.MaxEnergy, energy.CurrentValue + RechargeAmount);
+            energy.CurrentValue = Math.Min(config.MaxEnergy, energy.CurrentValue + config.RechargeEnergyGain);
             IsRecharging = true;
         }
 
         public void Defend()
         {
-            if (!randomize.RandomDefense())
+            if (!randomize.HasCompleteRandom(
+                GetBaseStatValue(StatsType.HP),
+                GetStatValue(StatsType.HP),
+                config.MinSuccessPercent,
+                config.MaxSuccessPercent))
             {
                 return;
             }
@@ -127,14 +140,18 @@
         {
             Stats energy = GetStat(StatsType.ENERGY);
 
-            if (energy.CurrentValue < RepairEnergyCost)
+            if (energy.CurrentValue < config.RepairEnergyCost)
             {
                 throw new InvalidOperationException("INVALID_ACTION");
             }
 
-            energy.CurrentValue -= RepairEnergyCost;
+            energy.CurrentValue -= config.RepairEnergyCost;
 
-            if (!randomize.RandomRepair())
+            if (!randomize.HasCompleteRandom(
+                GetBaseStatValue(StatsType.HP),
+                GetStatValue(StatsType.HP),
+                config.MinSuccessPercent,
+                config.MaxSuccessPercent))
             {
                 return 0;
             }
@@ -153,6 +170,15 @@
 
         public bool Dodge()
         {
+            Stats energy = GetStat(StatsType.ENERGY);
+
+            if (energy.CurrentValue < config.DodgeEnergyCost)
+            {
+                throw new InvalidOperationException("Énergie insuffisante pour esquiver !");
+            }
+
+            energy.CurrentValue -= config.DodgeEnergyCost;
+
             int currentHp = GetStatValue(StatsType.HP);
             int baseHp = GetBaseStatValue(StatsType.HP);
 
@@ -163,7 +189,11 @@
                 return true;
             }
 
-            isDodging = randomize.HasCompleteRandom(baseHp, currentHp, config.MinSuccessPercent, config.MaxSuccessPercent
+            isDodging = randomize.HasCompleteRandom(
+                baseHp,
+                currentHp,
+                config.MinSuccessPercent,
+                config.MaxSuccessPercent
             );
 
             if (isDodging)
@@ -198,6 +228,11 @@
 
         public int ReceiveDamage(int attack)
         {
+            if (attack <= 0)
+            {
+                return 0;
+            }
+
             if (isDodging)
             {
                 isDodging = false;

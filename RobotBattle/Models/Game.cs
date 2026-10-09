@@ -2,7 +2,7 @@
 {
     internal class Game
     {
-        private string id;
+        private string id = string.Empty;
 
         public string Id
         {
