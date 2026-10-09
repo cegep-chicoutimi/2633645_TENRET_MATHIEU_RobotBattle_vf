@@ -14,6 +14,7 @@ namespace RobotBattle.Network
 
         private static readonly ILogger Logger = Log.ForContext<SocketClient>();
 
+        // Établissement d'une connexion TCP avec l'adresse et le port de l'hôte
         public void ConnectToServer(string ipAddress, int port)
         {
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -28,6 +29,7 @@ namespace RobotBattle.Network
             return socket != null && socket.Connected;
         }
 
+        // Fermeture de la connexion
         public void Exit()
         {
             connection?.Dispose();

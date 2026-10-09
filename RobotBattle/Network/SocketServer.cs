@@ -14,6 +14,7 @@ namespace RobotBattle.Network
 
         private static readonly ILogger Logger = Log.ForContext<SocketServer>();
 
+        // Ouverture du socket serveur afin d'accepter les connexions entrantes
         public void StartServer(int port)
         {
             serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -23,6 +24,7 @@ namespace RobotBattle.Network
             Logger.Information("Serveur démarré sur le port : " + port);
         }
 
+        // Attente du client
         public void WaitForClient()
         {
             if (serverSocket == null)
@@ -36,6 +38,7 @@ namespace RobotBattle.Network
             Logger.Information("Client connecté au serveur");
         }
 
+        // Refus du second client car le serveur est déjà occupé (Server Busy)
         public void RejectSecondClient()
         {
             ConnectionHandler? currentConnection = connection;
@@ -71,6 +74,7 @@ namespace RobotBattle.Network
             });
         }
 
+        // Fermeture de la connexion du joueur
         public void DisconnectClient()
         {
             connection?.Dispose();
@@ -78,6 +82,7 @@ namespace RobotBattle.Network
             Logger.Information("Client déconnecté");
         }
 
+        // Fermeture du serveur
         public void StopServer()
         {
             DisconnectClient();

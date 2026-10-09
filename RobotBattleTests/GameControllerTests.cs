@@ -38,6 +38,10 @@ namespace RobotBattle.Tests
             return false;
         }
 
+        public void ShowPlayerRole(bool isHost)
+        {
+        }
+
         public void ShowMessage(string message)
         {
             Messages.Add(message);
@@ -55,15 +59,10 @@ namespace RobotBattle.Tests
         public void GetGameStatus_WhenNoGame_ShouldReturnWaitingForPlayer()
         {
             FakeGameView view = new FakeGameView();
-
             GameController controller = new GameController(view);
-
             GameStatus status = controller.GetGameStatus();
 
-            Assert.AreEqual(
-                GameStatus.WAITING_FOR_PLAYER,
-                status
-            );
+            Assert.AreEqual(GameStatus.WAITING_FOR_PLAYER, status);
         }
     }
 }

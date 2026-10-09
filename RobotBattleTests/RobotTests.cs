@@ -10,14 +10,8 @@ namespace RobotBattle.Tests
         public void ReceiveDamage_ShouldReduceHp()
         {
             Config config = new Config();
-
             RobotConfig robotConfig = new RobotConfig(0, 0, 10);
-
-            Robot robot = new Robot(
-                false,
-                robotConfig.ToStats(config),
-                config
-            );
+            Robot robot = new Robot(false, robotConfig.ToStats(config), config);
 
             robot.ReceiveDamage(20);
 

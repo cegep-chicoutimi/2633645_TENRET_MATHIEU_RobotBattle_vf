@@ -59,20 +59,24 @@
             HasEscaped = false;
         }
 
+        // Début de la partie
         public void StartGame()
         {
             Status = GameStatus.PLAYING;
             CurrentPlayer = 0;
         }
 
+        // Vérification des conditions de fin de partie
         public bool CheckGameEnded()
         {
+            // Fin de partie en cas de fuite
             if (HasEscaped)
             {
                 Status = GameStatus.END_GAME;
                 return true;
             }
 
+            // Fin de partie en cas de robot "mort"
             bool ended = robots.Any(r => r.GetStatValue(StatsType.HP) <= 0);
             if (ended)
             {
@@ -81,6 +85,7 @@
             return ended;
         }
 
+        // Détermination du vainqueur de la partie (si pas de fuite)
         public Robot GetWinner()
         {
             if (HasEscaped)
@@ -99,11 +104,13 @@
         public Robot CurrentRobot => robots[CurrentPlayer];
         public Robot OpponentRobot => robots[CurrentPlayer == 0 ? 1 : 0];
 
+        // Changement de joueur (tour de l'autre joueur)
         public void NextTurn()
         {
             CurrentPlayer = CurrentPlayer == 0 ? 1 : 0;
         }
 
+        // Termine la partie en cas de fuite
         public void EscapeGame()
         {
             HasEscaped = true;

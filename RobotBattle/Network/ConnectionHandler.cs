@@ -17,20 +17,19 @@ namespace RobotBattle.Network
             this.socket = socket;
         }
 
+        // Sérialization du message TCP en lui ajoutant une balise EOM afin de connaitre sa fin
         public void SendMessage(Message message)
         {
-            string serializedMessage =
-                MessageHelper.SerializeMessage(message);
+            string serializedMessage = MessageHelper.SerializeMessage(message);
             Logger.Information("Send MSG : " + serializedMessage);
-            string messageWithEom =
-                serializedMessage + EOM;
+            string messageWithEom = serializedMessage + EOM;
 
-            byte[] messageBytes =
-                Encoding.UTF8.GetBytes(messageWithEom);
+            byte[] messageBytes = Encoding.UTF8.GetBytes(messageWithEom);
 
             SendAll(messageBytes);
         }
 
+        // Réception des octets jusqu'au délimiteur (balise EOM)
         public Message ReceiveMessage()
         {
             StringBuilder builder = new StringBuilder();
@@ -46,48 +45,31 @@ namespace RobotBattle.Network
                     throw new SocketException();
                 }
 
-                string receivedPart =
-                    Encoding.UTF8.GetString(
-                        buffer,
-                        0,
-                        received
-                    );
+                string receivedPart = Encoding.UTF8.GetString(buffer, 0, received);
 
                 builder.Append(receivedPart);
 
-                string receivedMessage =
-                    builder.ToString();
+                string receivedMessage = builder.ToString();
 
-                int eomIndex =
-                    receivedMessage.IndexOf(EOM);
+                int eomIndex = receivedMessage.IndexOf(EOM);
 
                 if (eomIndex >= 0)
                 {
-                    string serializedMessage =
-                        receivedMessage.Substring(
-                            0,
-                            eomIndex
-                        );
+                    string serializedMessage = receivedMessage.Substring(0, eomIndex);
                     Logger.Information("Received MSG : " + serializedMessage);
-                    return MessageHelper.ParseMessage(
-                        serializedMessage
-                    );
+                    return MessageHelper.ParseMessage(serializedMessage);
                 }
             }
         }
 
+        // Répétition de l'envoi jusqu'à ce que l'intégralité du message ait été reçu
         private void SendAll(byte[] data)
         {
             int totalSent = 0;
 
             while (totalSent < data.Length)
             {
-                int sent = socket.Send(
-                    data,
-                    totalSent,
-                    data.Length - totalSent,
-                    SocketFlags.None
-                );
+                int sent = socket.Send(data, totalSent, data.Length - totalSent, SocketFlags.None);
 
                 if (sent <= 0)
                 {
@@ -98,15 +80,14 @@ namespace RobotBattle.Network
             }
         }
 
+        // Méthode dispose pour fermer le socket
         public void Dispose()
         {
             try
             {
                 if (socket.Connected)
                 {
-                    socket.Shutdown(
-                        SocketShutdown.Both
-                    );
+                    socket.Shutdown(SocketShutdown.Both);
                 }
             }
             catch (SocketException)

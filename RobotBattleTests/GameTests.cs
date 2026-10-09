@@ -10,21 +10,9 @@ namespace RobotBattle.Tests
         public void NextTurn_ShouldChangeCurrentPlayer()
         {
             Config config = new Config();
-
             RobotConfig robotConfig = new RobotConfig(10, 0, 0);
-
-            Robot host = new Robot(
-                true,
-                robotConfig.ToStats(config),
-                config
-            );
-
-            Robot client = new Robot(
-                false,
-                robotConfig.ToStats(config),
-                config
-            );
-
+            Robot host = new Robot(true, robotConfig.ToStats(config), config);
+            Robot client = new Robot(false, robotConfig.ToStats(config), config);
             Game game = new Game(config, host, client);
 
             game.StartGame();

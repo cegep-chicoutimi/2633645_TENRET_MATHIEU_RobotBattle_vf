@@ -33,6 +33,7 @@
             DamagePoints = damagePoints;
         }
 
+        // Vérification du nombre de points de configuration attribués
         public bool IsValid(int pointsToGive)
         {
             return HpPoints >= 0
@@ -41,6 +42,7 @@
                 && HpPoints + ArmorPoints + DamagePoints == pointsToGive;
         }
 
+        // Conversion des points de config en stats utilisables en combat
         public List<Stats> ToStats(Config config)
         {
             if (!IsValid(config.PointsToGive))

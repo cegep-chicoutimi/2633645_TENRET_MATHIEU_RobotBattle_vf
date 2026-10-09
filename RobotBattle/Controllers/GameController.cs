@@ -32,6 +32,7 @@ namespace RobotBattle.Controllers
             RegisterHandlers();
         }
 
+        // Association de chaque type de message à l'handler chargé de le traiter
         private void RegisterHandlers()
         {
             commandMenu.AddHandler(MessageType.PLAYER_JOIN, new PlayerJoinHandler((message, robot) => view.ShowMessage("Demande de connexion reçue !")));
@@ -49,6 +50,7 @@ namespace RobotBattle.Controllers
             commandMenu.AddHandler(MessageType.ERROR, new PlayerLeaveHandler((message, robot) => view.ShowMessage($"Erreur serveur : {message.Data}")));
         }
 
+        // Lancement du serveur (partie côté serveur) et acceptation du premier client qui se connecte
         public void CreateGame()
         {
             isHost = true;
@@ -106,6 +108,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Gestion de la session avec le client (connexion, configuration, combat et fin de partie)
         private void HandleClientSession(ConnectionHandler connection)
         {
             Message joinMessage = connection.ReceiveMessage();
@@ -162,6 +165,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Validation de la configuration du robot de l'hôte (qui est redemandée tant que la répartition n'est pas valide)
         private RobotConfig AskValidHostConfig()
         {
             RobotConfig hostConfig;
@@ -178,6 +182,7 @@ namespace RobotBattle.Controllers
             return hostConfig;
         }
 
+        // Validation de la configuration du robot reçue par le client (qui est redemandée tant que la répartition n'est pas valide)
         private RobotConfig ReceiveValidClientConfig(ConnectionHandler connection)
         {
             while (true)
@@ -209,10 +214,12 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Gestion du combat côté serveur (validation des actions, contrôle des tours et transmission des résultats)
         private void RunServerCombat(ConnectionHandler connection)
         {
             if (game == null) return;
 
+            // La partie continue tant que l'on atteint pas un critère de fin de partie
             while (!game.CheckGameEnded())
             {
                 if (game.CurrentRobot.IsHost)
@@ -228,6 +235,7 @@ namespace RobotBattle.Controllers
                     view.ShowMessage("\n--- Tour du client ---");
                     Message actionMessage = connection.ReceiveMessage();
 
+                    // Si le message reçu ne correspond pas à une action, une nouvelle action est demandée
                     if (actionMessage.Type != MessageType.PLAYER_ACTION)
                     {
                         SendError(connection, "EXPECTED_PLAYER_ACTION");
@@ -235,6 +243,7 @@ namespace RobotBattle.Controllers
                         continue;
                     }
 
+                    // Si le message reçu est null, une nouvelle action est demandée
                     if (actionMessage.Action == null)
                     {
                         SendError(connection, "INVALID_ACTION");
@@ -250,6 +259,7 @@ namespace RobotBattle.Controllers
                         ShowResult(result);
                         connection.SendMessage(result);
                     }
+                    // Si l'action est invalide, une nouvelle action est demandée
                     catch (InvalidOperationException exception)
                     {
                         SendError(connection, exception.Message);
@@ -258,6 +268,7 @@ namespace RobotBattle.Controllers
                     }
                 }
 
+                // Affichage du résultat de la fin de partie si la partie est terminée
                 if (game.CheckGameEnded())
                 {
                     Message endMessage = BuildEndMessage();
@@ -283,6 +294,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Gestion de la connexion du client au serveur et de sa partie
         public void JoinGame()
         {
             isHost = false;
@@ -356,6 +368,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Envoi de la configuration du client au serveur (qui est renvoyée en cas d'échec)
         private void SendClientConfiguration(ConnectionHandler connection)
         {
             bool accepted = false;
@@ -384,6 +397,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Gestion du combat du client (affichage des messages et envoi des actions)
         private void RunClientCombat(ConnectionHandler connection)
         {
             bool ended = false;
@@ -398,6 +412,7 @@ namespace RobotBattle.Controllers
                         ShowStart(message);
                         break;
 
+                    // Lorsque le client en reçoit l'autorisation, il peut choisir une action
                     case MessageType.TURN:
                         if (message.Data == "CLIENT")
                         {
@@ -430,6 +445,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Exécution de l'action et construction du message de résultat de celle-ci
         public Message ExecuteAction(GameAction action)
         {
             if (game == null || game.Status != GameStatus.PLAYING)
@@ -501,16 +517,19 @@ namespace RobotBattle.Controllers
             return MessageHelper.BuildMessage(MessageType.PLAYER_RESULT, action, game.CheckGameEnded() ? GameStatus.END_GAME : GameStatus.PLAYING, data);
         }
 
+        // Renvoi de l'état du jeu
         public GameStatus GetGameStatus()
         {
             return game?.Status ?? GameStatus.WAITING_FOR_PLAYER;
         }
 
+        // Traitement du message par le handler associé
         public void OnMessageReceived(Message message, Robot? from)
         {
             commandMenu.Execute(message, from);
         }
 
+        // Vérification de la validité d'une action (énergie dépensée)
         private GameAction AskValidAction(Robot robot)
         {
             while (true)
@@ -530,6 +549,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Construction du message avec les statistiques initiales envoyées au client
         private Message BuildStartMessage()
         {
             if (game == null) throw new InvalidOperationException();
@@ -543,12 +563,14 @@ namespace RobotBattle.Controllers
             return MessageHelper.BuildMessage(MessageType.GAME_START, status: GameStatus.PLAYING, data: data);
         }
 
+        // Construction du message qui indique à qui revient le prochain tour
         private Message BuildTurnMessage()
         {
             if (game == null) throw new InvalidOperationException();
             return MessageHelper.BuildMessage(MessageType.TURN, status: GameStatus.PLAYING, data: game.CurrentRobot.IsHost ? "HOTE" : "CLIENT");
         }
 
+        // Construction du message de fin de partie (stats, gagnant)
         private Message BuildEndMessage()
         {
             if (game == null) throw new InvalidOperationException();
@@ -563,11 +585,13 @@ namespace RobotBattle.Controllers
             return MessageHelper.BuildMessage(MessageType.GAME_END, status: GameStatus.END_GAME, data: data);
         }
 
+        // Envoi d'un message d'erreur au client
         private void SendError(ConnectionHandler connection, string code)
         {
             connection.SendMessage(MessageHelper.BuildMessage(MessageType.ERROR, status: GetGameStatus(), data: code));
         }
 
+        // Affichage des stats initiales de la partie
         private void ShowStart(Message message)
         {
             view.ShowPlayerRole(isHost);
@@ -581,6 +605,7 @@ namespace RobotBattle.Controllers
             }
         }
 
+        // Affichage du résultat d'une action
         private void ShowResult(Message message)
         {
             string[] values = message.Data.Split(';');
@@ -591,10 +616,11 @@ namespace RobotBattle.Controllers
                 return;
             }
 
-            view.ShowMessage($"\n{values[0]} => {values[1]} | Réussite : {values[2]}| Dégâts infligés : {values[3]}");
+            view.ShowMessage($"\n{values[0]} => {values[1]} | Réussite : {values[2]} | Dégâts infligés : {values[3]}");
             view.ShowMessage($"HP : Hôte={values[4]}, Client={values[5]} | Énergie : Hôte={values[6]}, Client={values[7]}");
         }
 
+        // Affichage du message de fin de partie
         private void ShowEnd(Message message)
         {
             string[] values = message.Data.Split(';');

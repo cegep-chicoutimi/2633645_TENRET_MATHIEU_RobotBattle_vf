@@ -7,6 +7,7 @@ namespace RobotBattle.Messages
     {
         private static readonly JsonSerializerOptions JsonSerializerOption = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
+        // Construction des messages
         public static Message BuildMessage(MessageType type, GameAction? action = null, GameStatus status = GameStatus.WAITING_FOR_PLAYER, string data = "")
         {
             return new Message
@@ -18,11 +19,13 @@ namespace RobotBattle.Messages
             };
         }
 
+        // Sérialization du message pour sa transmission sur le réseau
         public static string SerializeMessage(Message message)
         {
             return JsonSerializer.Serialize(message, JsonSerializerOption);
         }
 
+        // Désérialisation du message pour le convertir en objet Message
         public static Message ParseMessage(string serializedMessage)
         {
             Message? parsedMessage = JsonSerializer.Deserialize<Message>(serializedMessage, JsonSerializerOption);
@@ -35,11 +38,13 @@ namespace RobotBattle.Messages
             return parsedMessage;
         }
 
+        // Encodage des points de configurations du robot
         public static string SerializeRobotConfig(RobotConfig config)
         {
             return $"{config.HpPoints};{config.ArmorPoints};{config.DamagePoints}";
         }
 
+        // Validation et reconstruction de la configuration à partir de l'encodage reçu
         public static RobotConfig ParseRobotConfig(string data)
         {
             string[] parts = data.Split(';');

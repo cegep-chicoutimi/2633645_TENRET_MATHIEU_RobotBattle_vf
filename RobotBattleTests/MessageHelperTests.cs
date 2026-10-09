@@ -1,56 +1,53 @@
-﻿namespace RobotCombatTest;
-
-using RobotBattle.Messages;
+﻿using RobotBattle.Messages;
 using RobotBattle.Models;
 
-
-[TestClass]
-public class MessageHelperTest
+namespace RobotBattle.Tests
 {
-
-    [TestMethod]
-
-    public void ShouldBuildActionAttackMessage()
-
+    [TestClass]
+    public class MessageHelperTests
     {
-
-        var expected = "{\"messageType\":8,\"action\":0,\"status\":3,\"data\":\"Test data\"}";
-
-
-        var actual = MessageHelper.BuildMessage(MessageType.PLAYER_ACTION, GameAction.ATTACK, GameStatus.PLAYING, "Test data");
-        var messageString = MessageHelper.SerializeMessage(actual);
-        Assert.AreEqual(expected, messageString);
-
-    }
-
-
-    [TestMethod]
-
-    public void ShouldParseActionAttackMessage()
-
-    {
-
-        var expected = new Message
+        [TestMethod]
+        public void ShouldBuildActionAttackMessage()
         {
+            string expected = "{\"type\":8,\"action\":0,\"status\":3,\"data\":\"Test data\"}";
 
-            Type = MessageType.PLAYER_ACTION,
+            Message message = MessageHelper.BuildMessage(MessageType.PLAYER_ACTION, GameAction.ATTACK, GameStatus.PLAYING, "Test data");
+            string actual = MessageHelper.SerializeMessage(message);
 
-            Action = GameAction.ATTACK,
+            Assert.AreEqual(expected, actual);
+        }
 
-            Data = "Test data",
+        [TestMethod]
+        public void ShouldParseActionAttackMessage()
+        {
+            string serializedMessage = "{\"type\":8,\"action\":0,\"status\":3,\"data\":\"Test data\"}";
 
-            Status = GameStatus.PLAYING
+            Message actual = MessageHelper.ParseMessage(serializedMessage);
 
-        };
+            Assert.AreEqual(MessageType.PLAYER_ACTION, actual.Type);
+            Assert.AreEqual(GameAction.ATTACK, actual.Action);
+            Assert.AreEqual(GameStatus.PLAYING, actual.Status);
+            Assert.AreEqual("Test data", actual.Data);
+        }
 
-        var actual = MessageHelper.ParseMessage("""
+        [TestMethod]
+        public void ShouldSerializeAndParseRobotConfig()
+        {
+            RobotConfig config = new RobotConfig(5, 3, 2);
 
-            {"messageType": 8,"action": 0,"data": "Test data","status": 3}      
-            """);
+            string serializedConfig = MessageHelper.SerializeRobotConfig(config);
+            RobotConfig parsedConfig = MessageHelper.ParseRobotConfig(serializedConfig);
 
+            Assert.AreEqual("5;3;2", serializedConfig);
+            Assert.AreEqual(5, parsedConfig.HpPoints);
+            Assert.AreEqual(3, parsedConfig.ArmorPoints);
+            Assert.AreEqual(2, parsedConfig.DamagePoints);
+        }
 
-        Assert.AreEqual(expected, actual);
-
+        [TestMethod]
+        public void ParseRobotConfig_WithInvalidData_ShouldThrowException()
+        {
+            Assert.ThrowsExactly<InvalidDataException>(() => MessageHelper.ParseRobotConfig("5;3"));
+        }
     }
-
 }
