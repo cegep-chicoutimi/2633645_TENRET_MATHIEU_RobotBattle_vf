@@ -1,0 +1,9 @@
+Prompts IA utilisés dans le cadre du projet :
+
+1) Comment fonctionne la communication client-serveur avec les sockets TCP en C# ? Donne moi un exemple complet
+2) Explique moi comment gérer la délimination des messages avec un marqueur EOM ?
+3) Comment permettre à un joueur de recommencer son tour quand l'action est invalide dans le code suivant :
+4) Comment faire des tests unitaires ? Explique moi comment les mettre en place à l'aide d'un exemple détaillé
+5) Quelle est la différence entre un protocole de message utilisant la balise EOM et un autre qui indique la longueur du message ? Quelle est le meilleur système selon toi ?
+6) Comment utiliser Serilog dans un projet Visual Studio ?
+7) Quelle formule aléatoire pourrais-je utiliser afin de limiter les chances de réalisation d'une action en me basant sur la vie actuelle d'un joueur et sa vie initiale (plus il a perdu de vie, plus il doit avoir de chance de réussite) ?
